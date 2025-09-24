@@ -127,7 +127,9 @@ export default async function ProductsPage(props: {
     minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
     maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
     inStock: searchParams.inStock === 'true',
-    sortBy: (searchParams.sortBy as string) || 'created_at',
+    sortBy: (['name', 'price', 'rating', 'created_at'].includes(searchParams.sortBy as string) 
+      ? searchParams.sortBy as 'name' | 'price' | 'rating' | 'created_at' 
+      : 'created_at'),
     sortOrder: (searchParams.sortOrder as 'asc' | 'desc') || 'desc',
     page: searchParams.page ? Number(searchParams.page) : 1,
   }
@@ -182,16 +184,16 @@ export default async function ProductsPage(props: {
               <h3 className="text-lg font-semibold text-primary-800 mb-4">קטגוריות</h3>
               <div className="space-y-3">
                 {categories.map((category) => (
-                  <label key={category.value} className="flex items-center group cursor-pointer">
+                  <label key={category.id} className="flex items-center group cursor-pointer">
                     <input
                       type="radio"
                       name="category"
-                      value={category.value}
+                      value={category.slug}
                       className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-2 border-primary-300 group-hover:border-secondary-400 transition-colors"
-                      defaultChecked={category.value === ''}
+                      defaultChecked={category.slug === ''}
                     />
                     <span className="mr-3 text-sm text-primary-700 group-hover:text-secondary-600 font-medium transition-colors">
-                      {category.name} <span className="text-primary-500">({category.count})</span>
+                      {category.name} <span className="text-primary-500">({category.products_count || 0})</span>
                     </span>
                   </label>
                 ))}
