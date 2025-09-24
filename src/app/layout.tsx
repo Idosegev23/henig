@@ -7,6 +7,12 @@ import { CartProvider } from "@/contexts/CartContext";
 import CartSidebar from "@/components/cart/CartSidebar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OrganizationStructuredData, WebsiteStructuredData, LocalBusinessStructuredData } from "@/components/seo/StructuredData";
+import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import AccessibilityWidget from "@/components/accessibility/AccessibilityWidget";
+import SkipLinks from "@/components/accessibility/SkipLinks";
+import ReadingAids from "@/components/accessibility/ReadingAids";
+import KeyboardHandler from "@/components/accessibility/KeyboardHandler";
+import "@/styles/accessibility.css";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -65,18 +71,24 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <body className={`${heebo.variable} font-hebrew antialiased min-h-screen flex flex-col`}>
-        <ErrorBoundary>
-          <CartProvider>
-            <Header />
-            <main className="flex-1">
-              <ErrorBoundary>
-                {children}
-              </ErrorBoundary>
-            </main>
-            <Footer />
-            <CartSidebar />
-          </CartProvider>
-        </ErrorBoundary>
+        <AccessibilityProvider>
+          <ErrorBoundary>
+            <CartProvider>
+              <SkipLinks />
+              <Header />
+              <main id="main-content" className="flex-1" tabIndex={-1}>
+                <ErrorBoundary>
+                  {children}
+                </ErrorBoundary>
+              </main>
+              <Footer />
+              <CartSidebar />
+              <AccessibilityWidget />
+              <ReadingAids />
+              <KeyboardHandler />
+            </CartProvider>
+          </ErrorBoundary>
+        </AccessibilityProvider>
         <OrganizationStructuredData />
         <WebsiteStructuredData />
         <LocalBusinessStructuredData />

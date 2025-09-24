@@ -77,7 +77,12 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-primary-50 border-t-2 border-primary-200">
+    <footer 
+      id="footer"
+      className="bg-primary-50 border-t-2 border-primary-200"
+      role="contentinfo"
+      aria-label="תחתית האתר"
+    >
       {/* Main Footer */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="sm:flex gap-8">

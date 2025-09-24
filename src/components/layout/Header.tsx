@@ -33,7 +33,12 @@ export default function Header() {
   return (
     <>
       {/* Main Header */}
-      <header className="bg-white border-b border-neutral-200 sticky top-0 z-50 shadow-sm">
+      <header 
+        id="main-navigation"
+        className="bg-white border-b border-neutral-200 sticky top-0 z-50 shadow-sm"
+        role="banner"
+        aria-label="ניווט ראשי"
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4 lg:py-6">
             
@@ -72,7 +77,11 @@ export default function Header() {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex lg:items-center lg:gap-8">
+            <nav 
+              className="hidden lg:flex lg:items-center lg:gap-8"
+              role="navigation"
+              aria-label="תפריט ניווט ראשי"
+            >
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -82,6 +91,7 @@ export default function Header() {
                       ? 'text-primary-600 bg-primary-50'
                       : 'text-neutral-700 hover:text-primary-600 hover:bg-primary-50'
                   }`}
+                  aria-current={pathname === item.href ? 'page' : undefined}
                 >
                   {item.name}
                   <span className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-300 group-hover:w-8 ${
