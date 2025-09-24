@@ -1,0 +1,244 @@
+# Cursor Rules - מכון הניג
+
+## פרויקט: אתר איקומרס + קורסים למכון הניג
+
+### מידע כללי על הפרויקט
+- **מטרה**: פיתוח אתר איקומרס מתקדם למכון הניג המתמחה בטיפולים טבעיים לבעיות עיכול
+- **קהל יעד**: לקוחות פרטיים, מטפלים מקצועיים, מנהלי המכון
+- **שפה**: עברית (RTL)
+- **תקציב**: בינוני
+- **זמן פיתוח**: 3-4 חודשים
+
+### מותג ועיצוב
+```css
+/* צבעי מותג מאושרים */
+--primary-dark: #036E3A      /* ירוק כהה */
+--primary-light: #80BA4A     /* ירוק בהיר */
+--accent: #9CCED9            /* תכלת רך */
+--neutral: #E9EBED           /* אפור בהיר */
+--secondary: #64AE45         /* ירוק ביניים */
+
+/* גרדיאנט עיקרי */
+--gradient: linear-gradient(135deg, #1D8949 0%, #3F9C46 100%)
+```
+
+### מחסנית טכנולוגיות מאושרת
+```typescript
+// Frontend
+"next": "^14.2.0"           // App Router חובה
+"typescript": "^5.0.0"      // Type safety מלא
+"tailwindcss": "^3.4.0"     // Styling
+"@headlessui/react": "^1.7" // Accessible components
+"framer-motion": "^10.0"    // Animations
+"react-hook-form": "^7.45"  // Forms
+"zod": "^3.22"              // Validation
+"zustand": "^4.4"           // State management
+"@tanstack/react-query": "^4.0" // Server state
+
+// Backend & Database
+"supabase": "^2.38"         // Database + Auth + Storage
+"stripe": "^13.0"           // Payments
+"resend": "^1.0"            // Emails
+
+// DevOps
+"vercel": "hosting"         // Deployment
+"cloudflare": "cdn"         // CDN + Security
+```
+
+### דפוסי עיצוב מועדפים
+
+#### 1. Component Structure
+```typescript
+// תמיד השתמש במבנה הזה לקומפוננטים
+interface ComponentProps {
+  // Props עם TypeScript מלא
+}
+
+const Component: React.FC<ComponentProps> = ({ ...props }) => {
+  // Hooks למעלה
+  // Logic באמצע
+  // Return למטה עם JSX נקי
+  
+  return (
+    <div className="rtl-container">
+      {/* תמיד RTL לעברית */}
+    </div>
+  )
+}
+
+export default Component
+```
+
+#### 2. Database Patterns
+```sql
+-- תמיד השתמש ב-UUIDs
+id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+
+-- תמיד timestamps
+created_at TIMESTAMP DEFAULT NOW()
+updated_at TIMESTAMP DEFAULT NOW()
+
+-- תמיד soft deletes
+is_active BOOLEAN DEFAULT true
+```
+
+#### 3. API Routes Pattern
+```typescript
+// app/api/[resource]/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = createClient()
+    // Logic here
+    return NextResponse.json({ data })
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+```
+
+### חוקי פיתוח חובה
+
+#### אבטחה
+- **NEVER** חשוף API keys בקוד
+- תמיד השתמש ב-RLS ב-Supabase  
+- תמיד validate inputs עם Zod
+- תמיד rate limiting על API routes
+
+#### ביצועים
+- תמיד השתמש ב-Next.js Image component
+- תמיד lazy loading לקומפוננטים כבדים
+- תמיד caching עם React Query
+- תמיד optimize fonts עם next/font
+
+#### נגישות (AA חובה)
+- תמיד alt text לתמונות
+- תמיד proper heading hierarchy (h1 → h2 → h3)
+- תמיד focus states ברורים
+- תמיד keyboard navigation
+- תמיד color contrast מינימום 4.5:1
+
+#### עברית ו-RTL
+```css
+/* תמיד השתמש בכיוון נכון */
+.rtl-container {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Spacing מותאם לעברית */
+.hebrew-text {
+  font-family: 'Heebo', 'Assistant', sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+```
+
+### מבנה קבצים מועדף
+```
+henig-website/
+├── app/                    # Next.js 14 App Router
+│   ├── (public)/          # Public pages (homepage, products, etc.)
+│   ├── (auth)/            # Auth pages (login, register)
+│   ├── dashboard/         # User dashboard
+│   ├── admin/             # Admin panel
+│   └── api/               # API routes
+├── components/            # UI components
+│   ├── ui/               # Basic components (Button, Input, etc.)
+│   ├── forms/            # Form components
+│   ├── layout/           # Layout components (Header, Footer)
+│   └── features/         # Feature-specific components
+├── lib/                  # Utilities & configs
+├── services/             # Business logic services
+├── types/                # TypeScript definitions
+├── hooks/                # Custom React hooks
+└── utils/                # Helper functions
+```
+
+### שמות קבצים ומשתנים
+```typescript
+// קבצים: kebab-case
+product-card.tsx
+user-dashboard.tsx
+
+// קומפוננטים: PascalCase
+const ProductCard = () => {}
+const UserDashboard = () => {}
+
+// משתנים ופונקציות: camelCase
+const userEmail = 'test@example.com'
+const handleSubmit = () => {}
+
+// קבועים: UPPER_SNAKE_CASE
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+```
+
+### Error Handling מועדף
+```typescript
+// תמיד wrap async operations
+try {
+  const result = await apiCall()
+  return { data: result, error: null }
+} catch (error) {
+  console.error('Error:', error)
+  return { data: null, error: error.message }
+}
+
+// תמיד Error Boundaries לקומפוננטים
+<ErrorBoundary fallback={<ErrorFallback />}>
+  <Component />
+</ErrorBoundary>
+```
+
+### Testing עדיפויות
+1. **Unit tests** - פונקציות עסקיות חשובות
+2. **Integration tests** - API routes
+3. **E2E tests** - user flows קריטיים (רכישה, רישום)
+
+### SEO חובות
+```typescript
+// תמיד metadata מלא
+export const metadata: Metadata = {
+  title: 'כותרת בעברית | מכון הניג',
+  description: 'תיאור מפורט בעברית',
+  keywords: 'מילות מפתח בעברית',
+  openGraph: {
+    title: 'כותרת לשיתוף',
+    description: 'תיאור לשיתוף',
+    images: ['/og-image.jpg']
+  }
+}
+```
+
+### Performance Targets
+- **First Contentful Paint**: < 1.5s
+- **Largest Contentful Paint**: < 2.5s
+- **Cumulative Layout Shift**: < 0.1
+- **Time to Interactive**: < 3s
+- **Lighthouse Score**: 90+ בכל הקטגוריות
+
+### דברים שאסור לעשות
+❌ לא להשתמש ב-any ב-TypeScript  
+❌ לא להשתמש ב-inline styles  
+❌ לא לשכוח alt text בתמונות  
+❌ לא לחשוף sensitive data בלוגים  
+❌ לא להשתמש ב-console.log בפרודקשן  
+❌ לא לשכוח error handling  
+❌ לא להשתמש ב-var (רק let/const)  
+❌ לא לעשות commit בלי בדיקת linting
+
+### דברים שחובה לעשות
+✅ תמיד TypeScript עם strict mode  
+✅ תמיד responsive design  
+✅ תמיד accessibility  
+✅ תמיד error boundaries  
+✅ תמיד loading states  
+✅ תמיד validate user inputs  
+✅ תמיד optimize images  
+✅ תמיד test critical paths
+
+---
+*נוצר: ספטמבר 2025 | עודכן לאחרונה: ספטמבר 2025*
