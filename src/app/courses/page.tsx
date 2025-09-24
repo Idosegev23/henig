@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Metadata } from 'next'
-import { Button } from '@/components/ui/Button'
 import { RippleButton } from "@/components/magicui/ripple-button"
 import {
   AcademicCapIcon,
@@ -9,11 +8,7 @@ import {
   UserGroupIcon,
   StarIcon,
   PlayCircleIcon,
-  CheckCircleIcon,
-  SparklesIcon,
-  ArrowLeftIcon,
-  TruckIcon,
-  ShieldCheckIcon
+  CheckCircleIcon
 } from '@heroicons/react/24/outline'
 
 export const metadata: Metadata = {

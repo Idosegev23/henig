@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -109,7 +110,10 @@ const relatedProducts = [
   },
 ]
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
+export default function ProductPage() {
+  // Use useParams for client components in Next.js 15
+  const params = useParams()
+  const slug = params.slug as string
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')

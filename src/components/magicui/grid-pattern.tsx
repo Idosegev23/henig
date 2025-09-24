@@ -4,11 +4,11 @@ import { useId } from "react"
 import { cn } from "@/lib/utils"
 
 interface GridPatternProps {
-  width?: any
-  height?: any
-  x?: any
-  y?: any
-  strokeDasharray?: any
+  width?: number
+  height?: number
+  x?: number
+  y?: number
+  strokeDasharray?: number | string
   numSquares?: number
   className?: string
   maxOpacity?: number

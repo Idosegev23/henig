@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadUserData()
-  }, [])
+  }, [router])
 
   const loadUserData = async () => {
     try {

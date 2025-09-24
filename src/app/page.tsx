@@ -1,11 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeftIcon, TruckIcon, ShieldCheckIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
-import { StarIcon } from '@heroicons/react/24/solid'
-import { Button } from '@/components/ui/Button'
 import { RippleButton } from "@/components/magicui/ripple-button"
-import { formatPrice } from '@/lib/utils'
-import { ProductsService, ProductWithCategory } from '@/lib/services/products'
+import { ProductsService } from '@/lib/services/products'
 import { CategoriesService } from '@/lib/services/categories'
 
 export const metadata = {
@@ -18,7 +15,7 @@ export default async function HomePage() {
   const productsService = new ProductsService()
   const categoriesService = new CategoriesService()
 
-  const [categories, featuredProducts] = await Promise.all([
+  const [, featuredProducts] = await Promise.all([
     categoriesService.getCategories(),
     productsService.getFeaturedProducts(8),
   ])
@@ -177,12 +174,12 @@ export default async function HomePage() {
                 { id: 'dummy3', name: 'דיגסטיב פרו', short_description: 'תמיכה בעיכול ובריאות המעיים', price: 75, sale_price: null, rating: 4.6, reviews_count: 89, categories: { name: 'עיכול' }, images: ['/placeholder-product.jpg'] },
                 { id: 'dummy4', name: 'הליקו סטופ', short_description: 'פתרון טבעי להליקובקטר פילורי', price: 95, sale_price: 85, rating: 4.7, reviews_count: 142, categories: { name: 'הליקובקטר' }, images: ['/placeholder-product.jpg'] }
               ] : [])
-            ].slice(0, 4).map((product: any, index) => (
+            ].slice(0, 4).map((product, index) => (
               <div key={product.id} className="el-wrapper group">
                 {/* Top Section - Image */}
                 <div className="box-up">
                   <Image
-                    src={Array.isArray(product.images) ? product.images[0] : '/placeholder-product.jpg'}
+                    src={Array.isArray(product.images) && product.images[0] ? String(product.images[0]) : '/placeholder-product.jpg'}
                     alt={product.name || 'מוצר'}
                     fill
                     className="img object-cover"
@@ -204,7 +201,7 @@ export default async function HomePage() {
                     <div className="h-bg-inner"></div>
         </div>
 
-                  <Link href={`/products/${product.slug || '#'}`} className="cart">
+                  <Link href={`/products/${'slug' in product ? product.slug : product.id || '#'}`} className="cart">
                     <span className="price">
                       {product.sale_price ? `ש ${product.sale_price}` : `ש ${product.price || 89}`}
                     </span>

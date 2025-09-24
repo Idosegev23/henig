@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/Button'
 import { RippleButton } from "@/components/magicui/ripple-button"
 import {
   UserIcon,

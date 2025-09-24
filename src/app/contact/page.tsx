@@ -10,7 +10,6 @@ import {
   ClockIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
-  WhatsAppIcon
 } from '@heroicons/react/24/outline'
 
 const contactInfo = [
