@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
+import { useCart } from '@/contexts/CartContext'
 import {
   StarIcon,
   ShoppingCartIcon,
@@ -114,18 +115,29 @@ export default function ProductPage() {
   // Use useParams for client components in Next.js 15
   const params = useParams()
   const slug = params.slug as string
+  const { addItem, openCart } = useCart()
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
   const [isFavorite, setIsFavorite] = useState(false)
 
   const handleAddToCart = () => {
-    // Add to cart logic here
-    console.log(`Added ${quantity} of product ${mockProduct.id} to cart`)
+    addItem({
+      id: mockProduct.id,
+      name: mockProduct.name,
+      price: mockProduct.price,
+      sale_price: mockProduct.sale_price,
+      image: mockProduct.images[0],
+      slug: mockProduct.slug,
+      stock_quantity: mockProduct.stock_quantity,
+      quantity
+    })
+    openCart()
   }
 
   const handleBuyNow = () => {
-    // Buy now logic here
+    handleAddToCart()
+    // Redirect to checkout or open cart for immediate purchase
     console.log(`Buy now ${quantity} of product ${mockProduct.id}`)
   }
 

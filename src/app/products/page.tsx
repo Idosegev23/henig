@@ -1,11 +1,15 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-import { Metadata } from 'next'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { RippleButton } from '@/components/magicui/ripple-button'
 import { formatPrice } from '@/lib/utils'
 import { ProductsService } from '@/lib/services/products'
 import { CategoriesService } from '@/lib/services/categories'
+import { useCart } from '@/contexts/CartContext'
 import { 
   FunnelIcon, 
   MagnifyingGlassIcon,
@@ -13,11 +17,7 @@ import {
   ShoppingCartIcon 
 } from '@heroicons/react/24/outline'
 
-export const metadata: Metadata = {
-  title: 'מוצרים שלנו - מוצרים טבעיים איכותיים | מכון הניג',
-  description: 'גלו את מגוון המוצרים הטבעיים האיכותיים שלנו לטיפול בבעיות עיכול - צרבת, מעי רגיש, קנדידה ועוד',
-  keywords: 'מוצרים טבעיים, מכון הניג, בעיות עיכול, צרבת, מעי רגיש, קנדידה, טיפול טבעי',
-}
+// Metadata will be handled by layout or metadata API
 
 // Mock data - יוחלף בנתונים אמיתיים מהדאטאבייס
 const mockProducts = [
@@ -113,34 +113,217 @@ const categories = [
   { name: 'ניקוי רעלים', value: 'detox', count: 1 },
 ]
 
-export default async function ProductsPage(props: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
-  const searchParams = await props.searchParams
-  const productsService = new ProductsService()
-  const categoriesService = new CategoriesService()
+// טקסטים דינמיים לקטגוריות
+const categoryDescriptions = {
+  '': {
+    title: 'כל המוצרים שלנו',
+    description: 'גלו את מגוון המוצרים הטבעיים האיכותיים שלנו לטיפול יעיל ובטוח בבעיות עיכול. כל מוצר פותח בקפידה על בסיס מחקר מדעי ומסורת טבעית.',
+    icon: '🌿',
+    color: 'from-primary-600 to-secondary-600'
+  },
+  'heartburn': {
+    title: 'פתרונות לצרבת ורפלוקס',
+    description: 'מוצרים טבעיים ויעילים לטיפול בצרבת, רפלוקס ותחושת שריפה בחזה. פורמולות מתקדמות שמספקות הקלה מהירה וטווח ארוך.',
+    icon: '🔥',
+    color: 'from-red-500 to-orange-500'
+  },
+  'ibs': {
+    title: 'פתרונות למעי רגיש',
+    description: 'טיפולים טבעיים לתסמונת המעי הרגיש (IBS) - הקלה מכאבי בטן, נפיחות, שלשולים וקשיים. נוסחות מיוחדות לאיזון מערכת העיכול.',
+    icon: '🤲',
+    color: 'from-blue-500 to-teal-500'
+  },
+  'candida': {
+    title: 'מאבק בקנדידה ופטריות',
+    description: 'מוצרים מתקדמים למאבק יעיל בקנדידה ופטריות במערכת העיכול. פורמולות טבעיות שמחזירות את האיזון הטבעי של הגוף.',
+    icon: '⚔️',
+    color: 'from-purple-500 to-pink-500'
+  },
+  'inflammation': {
+    title: 'טיפול בדלקות במעיים',
+    description: 'פתרונות טבעיים לטיפול בדלקות במערכת העיכול. מוצרים המכילים חומרים אנטי-דלקתיים טבעיים לריפוי ושיקום.',
+    icon: '🩹',
+    color: 'from-green-500 to-emerald-500'
+  },
+  'probiotics': {
+    title: 'פרוביוטיקה איכותית',
+    description: 'פרוביוטיקה מתקדמת לשיקום וחיזוק מערכת העיכול. מיליארדי חיידקים טובים המסייעים לבריאות המעיים והחיסון.',
+    icon: '🦠',
+    color: 'from-indigo-500 to-blue-500'
+  },
+  'detox': {
+    title: 'ניקוי וטיהור מערכת העיכול',
+    description: 'מוצרי דיטוקס עדינים ויעילים לניקוי מערכת העיכול מרעלים וחומרים מזיקים. תהליך טיהור טבעי ובטוח.',
+    icon: '✨',
+    color: 'from-yellow-500 to-amber-500'
+  }
+}
 
-  // Parse search parameters
-  const filters = {
-    category: searchParams.category as string,
-    search: searchParams.search as string,
-    minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
-    maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
-    inStock: searchParams.inStock === 'true',
-    sortBy: (['name', 'price', 'rating', 'created_at'].includes(searchParams.sortBy as string) 
-      ? searchParams.sortBy as 'name' | 'price' | 'rating' | 'created_at' 
-      : 'created_at'),
-    sortOrder: (searchParams.sortOrder as 'asc' | 'desc') || 'desc',
-    page: searchParams.page ? Number(searchParams.page) : 1,
+function ProductsPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { addItem, openCart } = useCart()
+  const [products, setProducts] = useState<typeof mockProducts>(mockProducts)
+  const [loading, setLoading] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '')
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
+  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'featured')
+  const [inStockOnly, setInStockOnly] = useState(searchParams.get('inStock') === 'true')
+
+  // קבלת התיאור הדינמי לקטגוריה הנבחרת
+  const categoryInfo = categoryDescriptions[selectedCategory as keyof typeof categoryDescriptions] || categoryDescriptions['']
+
+  // פונקציה כללית לעדכון פרמטרים
+  const updateSearchParams = (updates: { [key: string]: string | null }) => {
+    const params = new URLSearchParams(searchParams)
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value)
+      } else {
+        params.delete(key)
+      }
+    })
+    
+    router.push(`/products?${params.toString()}`)
   }
 
-  // Fetch data
-  const [productsResult, categories] = await Promise.all([
-    productsService.getProducts(filters),
-    categoriesService.getCategories(),
-  ])
+  // פונקציה לשינוי קטגוריה
+  const handleCategoryChange = (categoryValue: string) => {
+    updateSearchParams({ category: categoryValue || null })
+  }
 
-  const { data: products, count, totalPages } = productsResult
+  // פונקציה לחיפוש
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    updateSearchParams({ search: term || null })
+  }
+
+  // פונקציה לפילטר מחירים
+  const handlePriceFilter = () => {
+    updateSearchParams({ 
+      minPrice: minPrice || null, 
+      maxPrice: maxPrice || null 
+    })
+  }
+
+  // פונקציה למיון
+  const handleSort = (sortValue: string) => {
+    setSortBy(sortValue)
+    updateSearchParams({ sortBy: sortValue })
+  }
+
+  // פונקציה לפילטר מלאי
+  const handleStockFilter = (checked: boolean) => {
+    setInStockOnly(checked)
+    updateSearchParams({ inStock: checked ? 'true' : null })
+  }
+
+  // פונקציה לקבלת שם הקטגוריה
+  const getCategoryName = (categoryValue: string) => {
+    const categoryMap: { [key: string]: string } = {
+      'heartburn': 'צרבת',
+      'ibs': 'מעי רגיש',
+      'candida': 'קנדידה',
+      'inflammation': 'דלקות',
+      'probiotics': 'פרוביוטיקה',
+      'detox': 'ניקוי'
+    }
+    return categoryMap[categoryValue] || ''
+  }
+
+  // פונקציה לפילטור ומיון המוצרים
+  const filterAndSortProducts = () => {
+    let filtered = [...mockProducts]
+
+    // פילטור לפי קטגוריה
+    if (selectedCategory) {
+      filtered = filtered.filter(product => 
+        product.category.name.includes(getCategoryName(selectedCategory))
+      )
+    }
+
+    // פילטור לפי חיפוש
+    if (searchTerm) {
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.short_description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // פילטור לפי מחיר
+    if (minPrice) {
+      filtered = filtered.filter(product => 
+        (product.sale_price || product.price) >= Number(minPrice)
+      )
+    }
+    if (maxPrice) {
+      filtered = filtered.filter(product => 
+        (product.sale_price || product.price) <= Number(maxPrice)
+      )
+    }
+
+    // פילטור לפי מלאי
+    if (inStockOnly) {
+      filtered = filtered.filter(product => product.in_stock)
+    }
+
+    // מיון
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => (a.sale_price || a.price) - (b.sale_price || b.price))
+        break
+      case 'price-high':
+        filtered.sort((a, b) => (b.sale_price || b.price) - (a.sale_price || a.price))
+        break
+      case 'rating':
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
+        break
+      case 'newest':
+        // אין לנו תאריך יצירה אמיתי, אז נמיין לפי ID
+        filtered.sort((a, b) => Number(b.id) - Number(a.id))
+        break
+      case 'featured':
+      default:
+        filtered.sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
+        break
+    }
+
+    setProducts(filtered)
+  }
+
+  useEffect(() => {
+    // עדכון state מ-URL parameters
+    setSelectedCategory(searchParams.get('category') || '')
+    setSearchTerm(searchParams.get('search') || '')
+    setMinPrice(searchParams.get('minPrice') || '')
+    setMaxPrice(searchParams.get('maxPrice') || '')
+    setSortBy(searchParams.get('sortBy') || 'featured')
+    setInStockOnly(searchParams.get('inStock') === 'true')
+  }, [searchParams])
+
+  useEffect(() => {
+    // פילטור המוצרים כשהפרמטרים משתנים
+    filterAndSortProducts()
+  }, [selectedCategory, searchTerm, minPrice, maxPrice, sortBy, inStockOnly])
+
+  // פונקציה להוספה לעגלה
+  const handleAddToCart = (product: typeof mockProducts[0]) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      sale_price: product.sale_price,
+      image: (product.images as string[])?.[0] || '/placeholder-product.jpg',
+      slug: product.slug,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      stock_quantity: (product as any).stock_quantity || 999,
+    })
+    openCart()
+  }
 
   return (
     <div className="hebrew-text">
@@ -159,6 +342,28 @@ export default async function ProductsPage(props: {
         </div>
       </div>
 
+      {/* Dynamic Category Section */}
+      {selectedCategory && (
+        <div className="bg-white border-b-2 border-primary-100">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${categoryInfo.color} mb-6 shadow-lg`}>
+                <span className="text-3xl">{categoryInfo.icon}</span>
+              </div>
+              <h2 className="text-3xl font-bold text-primary-800 mb-4" style={{textShadow: '1px 1px 2px rgba(0,0,0,0.1)'}}>
+                {categoryInfo.title}
+              </h2>
+              <p className="text-lg text-primary-600 max-w-4xl mx-auto leading-relaxed">
+                {categoryInfo.description}
+              </p>
+              <div className="mt-6">
+                <div className={`h-1 w-32 bg-gradient-to-r ${categoryInfo.color} mx-auto rounded-full`}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-primary-50 min-h-screen">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
@@ -173,6 +378,8 @@ export default async function ProductsPage(props: {
                 <input
                   type="text"
                   id="search"
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
                   placeholder="חפשו מוצר..."
                   className="w-full rounded-lg border-2 border-primary-300 py-3 pl-12 pr-4 text-sm text-primary-800 placeholder-primary-400 focus:border-secondary-500 focus:ring-secondary-500 focus:outline-none transition-colors"
                 />
@@ -184,16 +391,17 @@ export default async function ProductsPage(props: {
               <h3 className="text-lg font-semibold text-primary-800 mb-4">קטגוריות</h3>
               <div className="space-y-3">
                 {categories.map((category) => (
-                  <label key={category.id} className="flex items-center group cursor-pointer">
+                  <label key={category.value} className="flex items-center group cursor-pointer">
                     <input
                       type="radio"
                       name="category"
-                      value={category.slug}
+                      value={category.value}
+                      checked={selectedCategory === category.value}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
                       className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-2 border-primary-300 group-hover:border-secondary-400 transition-colors"
-                      defaultChecked={category.slug === ''}
                     />
                     <span className="mr-3 text-sm text-primary-700 group-hover:text-secondary-600 font-medium transition-colors">
-                      {category.name} <span className="text-primary-500">({category.products_count || 0})</span>
+                      {category.name} <span className="text-primary-500">({category.count})</span>
                     </span>
                   </label>
                 ))}
@@ -207,16 +415,21 @@ export default async function ProductsPage(props: {
                 <div className="flex gap-2">
                   <input
                     type="number"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
                     placeholder="מחיר מינימלי"
                     className="w-full rounded-lg border-2 border-primary-300 py-2 px-3 text-sm text-primary-800 placeholder-primary-400 focus:border-secondary-500 focus:ring-secondary-500 focus:outline-none transition-colors"
                   />
                   <input
                     type="number"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
                     placeholder="מחיר מקסימלי"
                     className="w-full rounded-lg border-2 border-primary-300 py-2 px-3 text-sm text-primary-800 placeholder-primary-400 focus:border-secondary-500 focus:ring-secondary-500 focus:outline-none transition-colors"
                   />
                 </div>
                 <Button 
+                  onClick={handlePriceFilter}
                   variant="outline" 
                   size="sm" 
                   className="w-full border-2 border-primary-500 text-primary-600 hover:bg-primary-50 hover:border-secondary-500 hover:text-secondary-600 transition-all duration-300"
@@ -232,6 +445,8 @@ export default async function ProductsPage(props: {
               <label className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => handleStockFilter(e.target.checked)}
                   className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-2 border-primary-300 rounded group-hover:border-secondary-400 transition-colors"
                 />
                 <span className="mr-3 text-sm text-primary-700 group-hover:text-secondary-600 font-medium transition-colors">רק מוצרים זמינים</span>
@@ -244,10 +459,14 @@ export default async function ProductsPage(props: {
             {/* Sort & View Options */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 bg-white p-6 rounded-2xl shadow-lg border-2 border-primary-200">
               <p className="text-lg font-semibold text-primary-800">
-                מציג <span className="text-secondary-600">{products.length}</span> מתוך <span className="text-secondary-600">{count}</span> מוצרים
+                מציג <span className="text-secondary-600">{products.length}</span> מתוך <span className="text-secondary-600">{mockProducts.length}</span> מוצרים
               </p>
               <div className="flex items-center gap-4">
-                <select className="rounded-lg border-2 border-primary-300 py-2 px-4 text-sm text-primary-800 focus:border-secondary-500 focus:ring-secondary-500 focus:outline-none transition-colors bg-white">
+                <select 
+                  value={sortBy}
+                  onChange={(e) => handleSort(e.target.value)}
+                  className="rounded-lg border-2 border-primary-300 py-2 px-4 text-sm text-primary-800 focus:border-secondary-500 focus:ring-secondary-500 focus:outline-none transition-colors bg-white"
+                >
                   <option value="featured">מומלצים</option>
                   <option value="price-low">מחיר נמוך לגבוה</option>
                   <option value="price-high">מחיר גבוה לנמוך</option>
@@ -262,6 +481,36 @@ export default async function ProductsPage(props: {
             </div>
 
             {/* Products Grid */}
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-primary-100 rounded-2xl h-64 mb-4"></div>
+                    <div className="bg-primary-100 rounded h-4 mb-2"></div>
+                    <div className="bg-primary-100 rounded h-4 w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="col-span-full text-center py-16">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-2xl font-bold text-primary-800 mb-2">לא נמצאו מוצרים</h3>
+                <p className="text-primary-600 mb-4">נסו לשנות את הפילטרים או החיפוש</p>
+                <Button 
+                  onClick={() => {
+                    setSelectedCategory('')
+                    setSearchTerm('')
+                    setMinPrice('')
+                    setMaxPrice('')
+                    setInStockOnly(false)
+                    router.push('/products')
+                  }}
+                  className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white"
+                >
+                  נקה פילטרים
+                </Button>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
                 <div key={product.id} className="el-wrapper group">
@@ -283,7 +532,8 @@ export default async function ProductsPage(props: {
                     )}
                     
                     {/* Out of Stock Overlay */}
-                    {product.stock_quantity === 0 && (
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {(product as any).stock_quantity === 0 && (
                       <div className="absolute inset-0 bg-primary-800/70 flex items-center justify-center">
                         <span className="bg-white text-primary-800 px-4 py-2 font-bold shadow-xl"
                               style={{borderRadius: '20px 0 20px 0'}}>
@@ -295,7 +545,7 @@ export default async function ProductsPage(props: {
                     <div className="img-info">
                       <div className="info-inner">
                         <span className="p-name">{product.name}</span>
-                        <span className="p-company">{product.categories?.name || 'מוצר טבעי'}</span>
+                        <span className="p-company">{product.category?.name || 'מוצר טבעי'}</span>
                       </div>
                       <div className="a-size">
                         דירוג: <span className="size">{product.rating || 4.5} ⭐</span> ({product.reviews_count || 0} ביקורות)
@@ -309,8 +559,8 @@ export default async function ProductsPage(props: {
                       <div className="h-bg-inner"></div>
                     </div>
 
-                    <Link href={`/products/${product.slug}`} className="cart">
-                      <span className="price">
+                    <div className="cart">
+                      <Link href={`/products/${product.slug}`} className="price">
                         {product.sale_price ? (
                           <>
                             ₪{product.sale_price}
@@ -319,22 +569,30 @@ export default async function ProductsPage(props: {
                         ) : (
                           `₪${product.price}`
                         )}
-                      </span>
+                      </Link>
                       <span className="add-to-cart">
                         <RippleButton 
                           rippleColor="#29D967"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleAddToCart(product)
+                          }}
                           className="txt bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 px-4 py-2 text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:shadow-xl transition-all duration-300"
                           style={{borderRadius: '20px 0 20px 0'}}
-                          disabled={product.stock_quantity === 0}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          disabled={(product as any).stock_quantity === 0}
                         >
-                          {product.stock_quantity === 0 ? 'אזל מהמלאי' : 'הוסף לעגלה'}
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                          {(product as any).stock_quantity === 0 ? 'אזל מהמלאי' : 'הוסף לעגלה'}
                         </RippleButton>
                       </span>
-                    </Link>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+            )}
 
             {/* Pagination */}
             <div className="mt-16 flex justify-center">
@@ -381,5 +639,17 @@ export default async function ProductsPage(props: {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      </div>
+    }>
+      <ProductsPageContent />
+    </Suspense>
   )
 }

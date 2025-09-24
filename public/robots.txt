@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Optimized for search engines
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://henig.co.il/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /api/
+Disallow: /cart/
+Disallow: /checkout/
+
+# Allow important pages
+Allow: /
+Allow: /products/
+Allow: /about/
+Allow: /contact/
+Allow: /blog/
+Allow: /courses/

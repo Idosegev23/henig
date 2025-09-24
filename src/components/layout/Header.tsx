@@ -13,6 +13,7 @@ import {
   PhoneIcon,
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/Button'
+import { useCart } from '@/contexts/CartContext'
 
 const navigation = [
   { name: 'בית', href: '/' },
@@ -27,6 +28,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
+  const { state, toggleCart } = useCart()
 
   return (
     <>
@@ -118,6 +120,19 @@ export default function Header() {
                 )}
               </div>
 
+              {/* Cart */}
+              <button
+                onClick={toggleCart}
+                className="relative p-2 rounded-lg text-neutral-700 hover:text-primary-600 hover:bg-primary-50 transition-all duration-300"
+              >
+                <ShoppingBagIcon className="h-6 w-6" />
+                {state.itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-secondary-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce">
+                    {state.itemCount > 9 ? '9+' : state.itemCount}
+                  </span>
+                )}
+              </button>
+
               {/* User Account */}
               <Link
                 href="/dashboard"
@@ -126,17 +141,6 @@ export default function Header() {
                 <UserIcon className="h-6 w-6" />
               </Link>
 
-              {/* Shopping Cart */}
-              <Link
-                href="/cart"
-                className="relative p-2 rounded-lg text-gray-600 hover:text-primary-500 hover:bg-gray-50 transition-colors"
-              >
-                <ShoppingBagIcon className="h-6 w-6" />
-                {/* Cart Badge */}
-                <span className="absolute -top-1 -right-1 bg-secondary-400 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  3
-                </span>
-              </Link>
 
               {/* CTA Button */}
               <div className="hidden lg:block mr-4">

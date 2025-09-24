@@ -3,6 +3,10 @@ import { Heebo } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { CartProvider } from "@/contexts/CartContext";
+import CartSidebar from "@/components/cart/CartSidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OrganizationStructuredData, WebsiteStructuredData, LocalBusinessStructuredData } from "@/components/seo/StructuredData";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -11,6 +15,7 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: "מכון הניג - טיפולים טבעיים לבעיות עיכול",
   description: "מכון מוביל בטיפולים טבעיים לבעיות עיכול. מוצרים איכותיים וקורסים מקצועיים למטפלים ולקוחות פרטיים.",
   keywords: "טיפולים טבעיים, בעיות עיכול, צרבת, מעי רגיש, קנדידה, דלקות במעיים, מכון הניג",
@@ -60,11 +65,21 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <body className={`${heebo.variable} font-hebrew antialiased min-h-screen flex flex-col`}>
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <ErrorBoundary>
+          <CartProvider>
+            <Header />
+            <main className="flex-1">
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+            </main>
+            <Footer />
+            <CartSidebar />
+          </CartProvider>
+        </ErrorBoundary>
+        <OrganizationStructuredData />
+        <WebsiteStructuredData />
+        <LocalBusinessStructuredData />
       </body>
     </html>
   );
